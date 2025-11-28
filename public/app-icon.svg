@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Hand -->
+  <ellipse cx="60" cy="95" rx="25" ry="12" fill="#9B7ED9"/>
+  <path d="M35 60 C35 95, 45 105, 60 105 C75 105, 85 95, 85 60" fill="#8B6FC0"/>
+  
+  <!-- Phone body -->
+  <rect x="38" y="15" width="44" height="75" rx="8" fill="#1a1a2e"/>
+  <rect x="38" y="15" width="44" height="75" rx="8" stroke="#2d2d4a" stroke-width="2"/>
+  
+  <!-- Phone screen -->
+  <rect x="42" y="22" width="36" height="62" rx="4" fill="#9B7ED9"/>
+  
+  <!-- Checkmark boxes -->
+  <rect x="48" y="30" width="24" height="14" rx="3" fill="white" fill-opacity="0.9"/>
+  <path d="M52 37 L56 41 L64 33" stroke="#9B7ED9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="58" y="35" width="10" height="2" rx="1" fill="#9B7ED9" fill-opacity="0.5"/>
+  <rect x="58" y="39" width="8" height="2" rx="1" fill="#9B7ED9" fill-opacity="0.3"/>
+  
+  <rect x="48" y="48" width="24" height="14" rx="3" fill="white" fill-opacity="0.9"/>
+  <path d="M52 55 L56 59 L64 51" stroke="#9B7ED9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="58" y="53" width="10" height="2" rx="1" fill="#9B7ED9" fill-opacity="0.5"/>
+  <rect x="58" y="57" width="8" height="2" rx="1" fill="#9B7ED9" fill-opacity="0.3"/>
+  
+  <rect x="48" y="66" width="24" height="14" rx="3" fill="white" fill-opacity="0.9"/>
+  <path d="M52 73 L56 77 L64 69" stroke="#9B7ED9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="58" y="71" width="10" height="2" rx="1" fill="#9B7ED9" fill-opacity="0.5"/>
+  <rect x="58" y="75" width="8" height="2" rx="1" fill="#9B7ED9" fill-opacity="0.3"/>
+</svg>
