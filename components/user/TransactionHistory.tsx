@@ -18,6 +18,7 @@ type TransactionFilter = 'all' | 'reward' | 'withdrawal'
 interface TransactionHistoryProps {
   transactions: Transaction[]
   className?: string
+  isDark?: boolean
 }
 
 const filterOptions: { value: TransactionFilter; label: string }[] = [
@@ -99,9 +100,10 @@ function getTransactionLabel(type: Transaction['transaction_type']): string {
 interface TransactionItemProps {
   transaction: Transaction
   index: number
+  isDark?: boolean
 }
 
-function TransactionItem({ transaction, index }: TransactionItemProps) {
+function TransactionItem({ transaction, index, isDark = true }: TransactionItemProps) {
   const isCredit = transaction.transaction_type === 'reward' || transaction.transaction_type === 'deposit'
   const iconColor = getTransactionColor(transaction.transaction_type)
 
@@ -110,27 +112,32 @@ function TransactionItem({ transaction, index }: TransactionItemProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors"
+      className={clsx(
+        'flex items-center justify-between p-4 rounded-xl border transition-colors',
+        isDark 
+          ? 'bg-white/5 border-white/5 hover:bg-white/10' 
+          : 'bg-white border-gray-200 hover:bg-gray-50'
+      )}
     >
       <div className="flex items-center gap-3">
         <div className={clsx('w-10 h-10 rounded-full flex items-center justify-center', iconColor)}>
           {getTransactionIcon(transaction.transaction_type)}
         </div>
         <div>
-          <p className="text-white font-medium">
+          <p className={clsx('font-medium', isDark ? 'text-white' : 'text-gray-900')}>
             {getTransactionLabel(transaction.transaction_type)}
           </p>
-          <div className="flex items-center gap-2 text-gray-400 text-sm">
+          <div className={clsx('flex items-center gap-2 text-sm', isDark ? 'text-gray-400' : 'text-gray-500')}>
             <Clock className="w-3 h-3" />
             <span>{formatDate(transaction.created_at)}</span>
           </div>
         </div>
       </div>
       <div className="text-right">
-        <p className={clsx('font-semibold', isCredit ? 'text-green-400' : 'text-red-400')}>
+        <p className={clsx('font-semibold', isCredit ? 'text-green-500' : 'text-red-500')}>
           {isCredit ? '+' : '-'}${Math.abs(transaction.amount).toFixed(2)}
         </p>
-        <p className="text-gray-500 text-xs">
+        <p className={clsx('text-xs', isDark ? 'text-gray-500' : 'text-gray-400')}>
           Balance: ${transaction.balance_after.toFixed(2)}
         </p>
       </div>
@@ -138,7 +145,7 @@ function TransactionItem({ transaction, index }: TransactionItemProps) {
   )
 }
 
-export function TransactionHistory({ transactions, className }: TransactionHistoryProps) {
+export function TransactionHistory({ transactions, className, isDark = true }: TransactionHistoryProps) {
   const [filter, setFilter] = useState<TransactionFilter>('all')
 
   const filteredTransactions = useMemo(() => {
@@ -150,7 +157,7 @@ export function TransactionHistory({ transactions, className }: TransactionHisto
     <div className={clsx('space-y-4', className)}>
       {/* Filter Tabs */}
       <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-gray-400" />
+        <Filter className={clsx('w-4 h-4', isDark ? 'text-gray-400' : 'text-gray-500')} />
         <div className="flex gap-2">
           {filterOptions.map((option) => (
             <button
@@ -159,8 +166,10 @@ export function TransactionHistory({ transactions, className }: TransactionHisto
               className={clsx(
                 'px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
                 filter === option.value
-                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
-                  : 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+                  ? 'bg-green-500/20 text-green-600 border border-green-500/30'
+                  : isDark 
+                    ? 'bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10'
+                    : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
               )}
             >
               {option.label}
@@ -178,6 +187,7 @@ export function TransactionHistory({ transactions, className }: TransactionHisto
                 key={transaction.id}
                 transaction={transaction}
                 index={index}
+                isDark={isDark}
               />
             ))
           ) : (
@@ -186,10 +196,13 @@ export function TransactionHistory({ transactions, className }: TransactionHisto
               animate={{ opacity: 1 }}
               className="py-12 text-center"
             >
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+              <div className={clsx(
+                'w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center',
+                isDark ? 'bg-white/5' : 'bg-gray-100'
+              )}>
                 <Coins className="w-8 h-8 text-gray-500" />
               </div>
-              <p className="text-gray-400">
+              <p className={isDark ? 'text-gray-400' : 'text-gray-600'}>
                 {filter === 'all' 
                   ? 'No transactions yet' 
                   : `No ${filter === 'reward' ? 'rewards' : 'withdrawals'} yet`}

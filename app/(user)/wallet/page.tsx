@@ -20,6 +20,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { TransactionHistory } from '@/components/user/TransactionHistory'
 import { Skeleton } from '@/components/shared/LoadingSkeleton'
 import { useUserStore } from '@/lib/stores/userStore'
+import { useThemeStore } from '@/lib/stores/themeStore'
 import { useRealtimeSubscriptions } from '@/lib/hooks'
 import type { Transaction } from '@/lib/types'
 import type { Database } from '@/lib/types/database'
@@ -34,12 +35,16 @@ type Profile = Database['public']['Tables']['profiles']['Row']
 
 export default function UserWalletPage() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
+  const { user, walletBalance, setUser, setBalance } = useUserStore()
+  const { theme } = useThemeStore()
+  const isDark = theme === 'dark'
+  
+  // Show cached data immediately
+  const hasCachedData = user !== null
+  const [isLoading, setIsLoading] = useState(!hasCachedData)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [transactions, setTransactions] = useState<Transaction[]>([])
-
-  const { user, walletBalance, setUser, setBalance } = useUserStore()
 
   const handleBalanceChange = useCallback((newBalance: number) => {
     setBalance(newBalance)
@@ -60,7 +65,7 @@ export default function UserWalletPage() {
     try {
       if (showRefreshing) {
         setIsRefreshing(true)
-      } else {
+      } else if (!hasCachedData) {
         setIsLoading(true)
       }
       setError(null)
@@ -107,12 +112,14 @@ export default function UserWalletPage() {
       setTransactions((transactionsData.data || []) as Transaction[])
     } catch (err) {
       console.error('Wallet load error:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load wallet')
+      if (!hasCachedData) {
+        setError(err instanceof Error ? err.message : 'Failed to load wallet')
+      }
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
     }
-  }, [router, setUser, setBalance])
+  }, [router, setUser, setBalance, hasCachedData])
 
   useEffect(() => {
     loadWalletData()
@@ -127,9 +134,12 @@ export default function UserWalletPage() {
     .reduce((sum, t) => sum + t.amount, 0)
 
 
-  if (isLoading) {
+  const bgClass = isDark ? 'bg-[#0a0a0a]' : 'bg-gray-100'
+
+  // Only show loading skeleton if no cached data
+  if (isLoading && !hasCachedData) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] p-4">
+      <div className={`min-h-screen ${bgClass} p-4`}>
         <Skeleton className="h-12 w-32 mb-6" />
         <Skeleton className="h-40 mb-6" />
         <Skeleton className="h-8 w-48 mb-4" />
@@ -142,9 +152,9 @@ export default function UserWalletPage() {
     )
   }
 
-  if (error) {
+  if (error && !hasCachedData) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+      <div className={`min-h-screen ${bgClass} flex items-center justify-center p-4`}>
         <div className="text-center">
           <p className="text-red-400 mb-4">{error}</p>
           <Button onClick={() => loadWalletData()}>
@@ -156,7 +166,7 @@ export default function UserWalletPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pb-20">
+    <div className={`min-h-screen ${bgClass} pb-20`}>
       {/* Header */}
       <div className="p-4">
         <motion.div
@@ -166,13 +176,16 @@ export default function UserWalletPage() {
         >
           <button
             onClick={() => router.push('/dashboard')}
-            className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+            className={clsx(
+              'w-10 h-10 rounded-full flex items-center justify-center transition-colors',
+              isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-200 hover:bg-gray-300'
+            )}
           >
-            <ArrowLeft className="w-5 h-5 text-white" />
+            <ArrowLeft className={clsx('w-5 h-5', isDark ? 'text-white' : 'text-gray-700')} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-white">My Wallet</h1>
-            <p className="text-gray-400 text-sm">Track your earnings and transactions</p>
+            <h1 className={clsx('text-2xl font-bold', isDark ? 'text-white' : 'text-gray-900')}>My Wallet</h1>
+            <p className={clsx('text-sm', isDark ? 'text-gray-400' : 'text-gray-600')}>Track your earnings and transactions</p>
           </div>
         </motion.div>
 
@@ -183,11 +196,11 @@ export default function UserWalletPage() {
           transition={{ delay: 0.1 }}
           className="mb-6"
         >
-          <Card variant="glass" className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 border-purple-500/30">
+          <Card variant="glass" className="bg-gradient-to-r from-green-400 to-green-500 border-green-500/30">
             <CardContent className="py-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="flex items-center gap-2 text-gray-400 mb-2">
+                  <div className="flex items-center gap-2 text-white/80 mb-2">
                     <Wallet className="w-5 h-5" />
                     <span>Available Balance</span>
                   </div>
@@ -218,24 +231,24 @@ export default function UserWalletPage() {
             'border',
             isWithdrawalEligible(walletBalance) 
               ? 'bg-green-500/10 border-green-500/30' 
-              : 'bg-orange-500/10 border-orange-500/30'
+              : isDark ? 'bg-orange-500/10 border-orange-500/30' : 'bg-purple-50 border-purple-200'
           )}>
             <CardContent className="py-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <DollarSign className={clsx(
                     'w-5 h-5',
-                    isWithdrawalEligible(walletBalance) ? 'text-green-400' : 'text-orange-400'
+                    isWithdrawalEligible(walletBalance) ? 'text-green-500' : 'text-orange-500'
                   )} />
-                  <span className="text-white font-medium">Withdrawal Status</span>
+                  <span className={clsx('font-medium', isDark ? 'text-white' : 'text-gray-900')}>Withdrawal Status</span>
                 </div>
                 {isWithdrawalEligible(walletBalance) ? (
-                  <div className="flex items-center gap-1 text-green-400">
+                  <div className="flex items-center gap-1 text-green-500">
                     <CheckCircle className="w-4 h-4" />
                     <span className="text-sm font-medium">Eligible</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1 text-orange-400">
+                  <div className="flex items-center gap-1 text-orange-500">
                     <AlertCircle className="w-4 h-4" />
                     <span className="text-sm font-medium">Not Yet</span>
                   </div>
@@ -245,10 +258,10 @@ export default function UserWalletPage() {
               {/* Progress Bar */}
               <div className="mb-3">
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-400">Progress to minimum</span>
-                  <span className="text-white">${walletBalance.toFixed(2)} / ${MINIMUM_WITHDRAWAL.toFixed(2)}</span>
+                  <span className={isDark ? 'text-gray-400' : 'text-gray-600'}>Progress to minimum</span>
+                  <span className={isDark ? 'text-white' : 'text-gray-900'}>${walletBalance.toFixed(2)} / ${MINIMUM_WITHDRAWAL.toFixed(2)}</span>
                 </div>
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div className={clsx('h-2 rounded-full overflow-hidden', isDark ? 'bg-white/10' : 'bg-gray-200')}>
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${calculateWithdrawalProgress(walletBalance)}%` }}
@@ -262,11 +275,11 @@ export default function UserWalletPage() {
               </div>
 
               {isWithdrawalEligible(walletBalance) ? (
-                <p className="text-green-400 text-sm">
+                <p className="text-green-500 text-sm">
                   🎉 You can withdraw your earnings now!
                 </p>
               ) : (
-                <p className="text-orange-400 text-sm">
+                <p className="text-orange-500 text-sm">
                   Earn ${calculateAmountNeeded(walletBalance).toFixed(2)} more to reach the minimum withdrawal of ${MINIMUM_WITHDRAWAL.toFixed(2)}
                 </p>
               )}
@@ -281,24 +294,24 @@ export default function UserWalletPage() {
           transition={{ delay: 0.2 }}
           className="grid grid-cols-2 gap-4 mb-6"
         >
-          <Card variant="glass">
+          <Card variant="glass" className={isDark ? '' : 'bg-white border border-gray-200'}>
             <CardContent className="py-4">
-              <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                <TrendingUp className="w-4 h-4 text-green-400" />
+              <div className={clsx('flex items-center gap-2 text-sm mb-1', isDark ? 'text-gray-400' : 'text-gray-600')}>
+                <TrendingUp className="w-4 h-4 text-green-500" />
                 <span>Total Earned</span>
               </div>
-              <p className="text-xl font-bold text-green-400">
+              <p className="text-xl font-bold text-green-500">
                 ${totalEarned.toFixed(2)}
               </p>
             </CardContent>
           </Card>
-          <Card variant="glass">
+          <Card variant="glass" className={isDark ? '' : 'bg-white border border-gray-200'}>
             <CardContent className="py-4">
-              <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
-                <Coins className="w-4 h-4 text-purple-400" />
+              <div className={clsx('flex items-center gap-2 text-sm mb-1', isDark ? 'text-gray-400' : 'text-gray-600')}>
+                <Coins className="w-4 h-4 text-purple-500" />
                 <span>Tasks Completed</span>
               </div>
-              <p className="text-xl font-bold text-purple-400">
+              <p className="text-xl font-bold text-purple-500">
                 {transactions.filter((t) => t.transaction_type === 'reward').length}
               </p>
             </CardContent>
@@ -312,20 +325,21 @@ export default function UserWalletPage() {
           transition={{ delay: 0.3 }}
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Transaction History</h2>
+            <h2 className={clsx('text-lg font-semibold', isDark ? 'text-white' : 'text-gray-900')}>Transaction History</h2>
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
               className={clsx(
-                'p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors',
+                'p-2 rounded-lg transition-colors',
+                isDark ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-200 hover:bg-gray-300',
                 isRefreshing && 'opacity-50 cursor-not-allowed'
               )}
             >
-              <RefreshCw className={clsx('w-4 h-4 text-gray-400', isRefreshing && 'animate-spin')} />
+              <RefreshCw className={clsx('w-4 h-4', isDark ? 'text-gray-400' : 'text-gray-600', isRefreshing && 'animate-spin')} />
             </button>
           </div>
           
-          <TransactionHistory transactions={transactions} />
+          <TransactionHistory transactions={transactions} isDark={isDark} />
         </motion.div>
       </div>
     </div>

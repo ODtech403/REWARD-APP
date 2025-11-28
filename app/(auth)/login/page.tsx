@@ -33,11 +33,11 @@ export default function LoginPage() {
         return
       }
 
-      router.refresh()
+      // Navigate immediately without waiting for refresh
+      router.push('/dashboard')
     } catch (err) {
-      // Handle network errors
       console.error('Login error:', err)
-      setError('Unable to connect to server. Please check your internet connection and try again.')
+      setError('Unable to connect. Please check your internet connection.')
       setLoading(false)
     }
   }

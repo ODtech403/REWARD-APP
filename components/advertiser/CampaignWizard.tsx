@@ -10,6 +10,17 @@ import { Card, CardContent } from '@/components/ui/Card'
 import type { CampaignDraft } from '@/lib/types'
 
 const MIN_BUDGET = 10
+const MIN_CPA = 0.02
+
+// URL validation helper
+function isValidUrl(string: string): boolean {
+  try {
+    new URL(string)
+    return true
+  } catch {
+    return false
+  }
+}
 
 export interface CampaignWizardProps {
   onComplete: (campaign: CampaignDraft) => void
@@ -32,6 +43,7 @@ interface FormData {
   maxCompletionsPerUser: number
   thumbnailUrl: string
   thumbnailPreview: string | null
+  promotionUrl: string // Direct link, app store link, or website URL
 }
 
 const CAMPAIGN_TYPES: { value: CampaignType; label: string; description: string }[] = [
@@ -57,12 +69,13 @@ export function CampaignWizard({ onComplete, onCancel, advertiserBalance, catego
     categoryId: '',
     campaignType: 'survey',
     totalBudget: 50,
-    costPerAction: 1,
+    costPerAction: 0.02, // Minimum: $0.02 per click
     cooldownSeconds: 120, // 2 minutes default cooldown
     estimatedDurationMinutes: 5,
     maxCompletionsPerUser: 1, // Default: user can complete once
     thumbnailUrl: '',
     thumbnailPreview: null,
+    promotionUrl: '', // Direct link to promote
   })
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({})
 
@@ -81,6 +94,11 @@ export function CampaignWizard({ onComplete, onCancel, advertiserBalance, catego
       if (!formData.campaignType) {
         newErrors.campaignType = 'Campaign type is required'
       }
+      if (!formData.promotionUrl.trim()) {
+        newErrors.promotionUrl = 'Promotion URL is required'
+      } else if (!isValidUrl(formData.promotionUrl)) {
+        newErrors.promotionUrl = 'Please enter a valid URL'
+      }
     }
 
     if (step === 2) {
@@ -90,8 +108,8 @@ export function CampaignWizard({ onComplete, onCancel, advertiserBalance, catego
       if (formData.totalBudget > advertiserBalance) {
         newErrors.totalBudget = 'Insufficient wallet balance'
       }
-      if (formData.costPerAction <= 0) {
-        newErrors.costPerAction = 'CPA must be greater than 0'
+      if (formData.costPerAction < 0.02) {
+        newErrors.costPerAction = 'Minimum CPA is $0.02 per click'
       }
       if (formData.costPerAction > formData.totalBudget) {
         newErrors.costPerAction = 'CPA cannot exceed total budget'
@@ -132,6 +150,7 @@ export function CampaignWizard({ onComplete, onCancel, advertiserBalance, catego
       estimatedDurationMinutes: formData.estimatedDurationMinutes,
       maxCompletionsPerUser: formData.maxCompletionsPerUser,
       thumbnailUrl: formData.thumbnailUrl || undefined,
+      promotionUrl: formData.promotionUrl.trim(),
     }
     onComplete(draft)
   }
@@ -241,7 +260,7 @@ export function CampaignWizard({ onComplete, onCancel, advertiserBalance, catego
 // Step 1: Basic Info
 interface Step1Props {
   formData: FormData
-  errors: Partial<Record<keyof FormData, string>>
+  errors: Partial<Record<keyof FormData, string>> & { promotionUrl?: string }
   categories: { id: string; name: string }[]
   updateField: <K extends keyof FormData>(field: K, value: FormData[K]) => void
 }
@@ -258,6 +277,30 @@ function Step1BasicInfo({ formData, errors, categories, updateField }: Step1Prop
         onChange={(e) => updateField('title', e.target.value)}
         error={errors.title}
       />
+
+      {/* Promotion URL - Required */}
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Promotion URL <span className="text-red-400">*</span>
+        </label>
+        <input
+          type="url"
+          placeholder="https://example.com or app store link"
+          className={clsx(
+            'w-full bg-white/5 border rounded-xl py-3 px-4 text-white placeholder-gray-500',
+            'focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all',
+            errors.promotionUrl ? 'border-red-500/50' : 'border-white/10'
+          )}
+          value={formData.promotionUrl}
+          onChange={(e) => updateField('promotionUrl', e.target.value)}
+        />
+        {errors.promotionUrl && (
+          <p className="mt-2 text-sm text-red-400">{errors.promotionUrl}</p>
+        )}
+        <p className="text-xs text-gray-500 mt-1">
+          Direct link, website, or app store URL that users will visit when they click Play
+        </p>
+      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -365,11 +408,11 @@ function Step2Budget({ formData, errors, advertiserBalance, estimatedCompletions
 
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-2">
-            Cost Per Action ($)
+            Cost Per Action ($) <span className="text-gray-500 text-xs">(min $0.02)</span>
           </label>
           <input
             type="number"
-            min="0.01"
+            min="0.02"
             step="0.01"
             className={clsx(
               'w-full bg-white/5 border rounded-xl py-3 px-4 text-white placeholder-gray-500',
@@ -382,6 +425,7 @@ function Step2Budget({ formData, errors, advertiserBalance, estimatedCompletions
           {errors.costPerAction && (
             <p className="mt-2 text-sm text-red-400">{errors.costPerAction}</p>
           )}
+          <p className="text-xs text-gray-500 mt-1">User receives 75% (${(formData.costPerAction * 0.75).toFixed(4)})</p>
         </div>
       </div>
 
@@ -689,6 +733,7 @@ function Step4Review({ formData, estimatedCompletions }: Step4Props) {
       
       <div className="space-y-4">
         <ReviewItem label="Title" value={formData.title} />
+        <ReviewItem label="Promotion URL" value={formData.promotionUrl} />
         {formData.description && (
           <ReviewItem label="Description" value={formData.description} />
         )}

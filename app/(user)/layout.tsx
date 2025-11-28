@@ -17,11 +17,13 @@ import {
   CreditCard,
   Shield,
   ChevronRight,
-  Info
+  Info,
+  Users
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import { useUserStore } from '@/lib/stores/userStore'
+import { useThemeStore } from '@/lib/stores/themeStore'
 import type { Profile } from '@/lib/types'
 
 const navItems = [
@@ -32,6 +34,7 @@ const navItems = [
 ]
 
 const menuItems = [
+  { href: '/referral', icon: Users, label: 'Refer & Earn', description: 'Invite friends, earn $0.02 each' },
   { href: '/wallet', icon: CreditCard, label: 'Withdrawal', description: 'Withdraw your earnings' },
   { href: '/about', icon: Info, label: 'About', description: 'Learn how to use the app' },
   { href: '/settings', icon: Settings, label: 'Settings', description: 'App preferences' },
@@ -49,6 +52,8 @@ export default function UserLayout({
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const { user, walletBalance, setUser, setBalance } = useUserStore()
+  const { theme } = useThemeStore()
+  const isDark = theme === 'dark'
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -103,14 +108,17 @@ export default function UserLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className={clsx(
+        'min-h-screen flex items-center justify-center',
+        isDark ? 'bg-[#0a0a0a]' : 'bg-gray-100'
+      )}>
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className={clsx('min-h-screen', isDark ? 'bg-[#0a0a0a]' : 'bg-gray-100')}>
       {/* Top Header Bar - Green Notification Banner */}
       <header className="sticky top-0 z-40 bg-gradient-to-r from-green-500 to-emerald-400 shadow-sm">
         <div className="flex items-center px-4 py-3 gap-3">
@@ -158,7 +166,10 @@ export default function UserLayout({
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed left-0 top-0 bottom-0 w-80 bg-white z-50 shadow-2xl"
+              className={clsx(
+                'fixed left-0 top-0 bottom-0 w-80 z-50 shadow-2xl',
+                isDark ? 'bg-[#1a1a1a]' : 'bg-white'
+              )}
             >
               {/* Drawer Header */}
               <div className="bg-gradient-to-br from-green-400 to-green-600 p-6">
@@ -197,25 +208,40 @@ export default function UserLayout({
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors group"
+                    className={clsx(
+                      'flex items-center gap-4 p-4 rounded-xl transition-colors group',
+                      isDark ? 'hover:bg-white/5' : 'hover:bg-gray-50'
+                    )}
                   >
-                    <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">
-                      <item.icon className="w-5 h-5 text-green-600" />
+                    <div className={clsx(
+                      'w-10 h-10 rounded-xl flex items-center justify-center transition-colors',
+                      isDark ? 'bg-green-500/20 group-hover:bg-green-500/30' : 'bg-green-50 group-hover:bg-green-100'
+                    )}>
+                      <item.icon className="w-5 h-5 text-green-500" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-gray-800 font-medium">{item.label}</p>
-                      <p className="text-gray-500 text-sm">{item.description}</p>
+                      <p className={clsx('font-medium', isDark ? 'text-white' : 'text-gray-800')}>{item.label}</p>
+                      <p className={clsx('text-sm', isDark ? 'text-gray-400' : 'text-gray-500')}>{item.description}</p>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                    <ChevronRight className={clsx(
+                      'w-5 h-5 transition-colors',
+                      isDark ? 'text-gray-600 group-hover:text-gray-400' : 'text-gray-400 group-hover:text-gray-600'
+                    )} />
                   </Link>
                 ))}
               </div>
 
               {/* Logout Button */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
+              <div className={clsx(
+                'absolute bottom-0 left-0 right-0 p-4 border-t',
+                isDark ? 'border-gray-800' : 'border-gray-100'
+              )}>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-3 w-full p-4 rounded-xl hover:bg-red-50 transition-colors text-red-500"
+                  className={clsx(
+                    'flex items-center gap-3 w-full p-4 rounded-xl transition-colors text-red-500',
+                    isDark ? 'hover:bg-red-500/10' : 'hover:bg-red-50'
+                  )}
                 >
                   <LogOut className="w-5 h-5" />
                   <span className="font-medium">Logout</span>
@@ -231,8 +257,11 @@ export default function UserLayout({
         {children}
       </main>
 
-      {/* Bottom Navigation - Clean White */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 safe-area-pb">
+      {/* Bottom Navigation */}
+      <nav className={clsx(
+        'fixed bottom-0 left-0 right-0 border-t z-40 safe-area-pb',
+        isDark ? 'bg-[#1a1a1a] border-gray-800' : 'bg-white border-gray-200'
+      )}>
         <div className="flex items-center justify-around py-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href
@@ -243,15 +272,15 @@ export default function UserLayout({
                 className={clsx(
                   'flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all min-w-[64px]',
                   isActive
-                    ? 'text-green-600'
-                    : 'text-gray-400 hover:text-gray-600'
+                    ? 'text-green-500'
+                    : isDark ? 'text-gray-500 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
                 )}
               >
                 <motion.div
                   animate={isActive ? { scale: 1.1 } : { scale: 1 }}
                   className={clsx(
                     'p-2 rounded-xl transition-colors',
-                    isActive ? 'bg-green-50' : ''
+                    isActive ? (isDark ? 'bg-green-500/20' : 'bg-green-50') : ''
                   )}
                 >
                   <item.icon className="w-5 h-5" />

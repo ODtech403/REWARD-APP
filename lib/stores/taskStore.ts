@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { Task, Category } from '@/lib/types'
 
 interface TaskState {
@@ -24,12 +25,14 @@ interface TaskState {
   getTaskById: (taskId: string) => Task | undefined
 }
 
-export const useTaskStore = create<TaskState>()((set, get) => ({
-  tasks: [],
-  categories: [],
-  selectedCategory: null,
-  isLoading: true,
-  error: null,
+export const useTaskStore = create<TaskState>()(
+  persist(
+    (set, get) => ({
+      tasks: [],
+      categories: [],
+      selectedCategory: null,
+      isLoading: true,
+      error: null,
 
   setTasks: (tasks) => set({ tasks, isLoading: false }),
 
@@ -94,4 +97,13 @@ export const useTaskStore = create<TaskState>()((set, get) => ({
   getTaskById: (taskId) => {
     return get().tasks.find((task) => task.id === taskId)
   },
-}))
+    }),
+    {
+      name: 'task-storage',
+      partialize: (state) => ({
+        tasks: state.tasks,
+        categories: state.categories,
+      }),
+    }
+  )
+)

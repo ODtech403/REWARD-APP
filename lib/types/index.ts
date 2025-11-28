@@ -7,6 +7,7 @@ export type Campaign = Database['public']['Tables']['campaigns']['Row']
 export type TaskCompletion = Database['public']['Tables']['task_completions']['Row']
 export type Transaction = Database['public']['Tables']['transactions']['Row']
 export type Deposit = Database['public']['Tables']['deposits']['Row']
+export type Referral = Database['public']['Tables']['referrals']['Row']
 
 // Extended types for UI
 export interface Task extends Campaign {
@@ -44,6 +45,7 @@ export interface CampaignDraft {
   thumbnailUrl?: string
   gradientStart?: string
   gradientEnd?: string
+  promotionUrl: string // Direct link, app store URL, or website to promote
 }
 
 // API types

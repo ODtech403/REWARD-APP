@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Star, Lock } from 'lucide-react'
+import { Star, Lock, Play } from 'lucide-react'
 import { clsx } from 'clsx'
 import type { Task } from '@/lib/types'
 import { CooldownTimer } from './CooldownTimer'
@@ -13,12 +13,35 @@ interface TaskCardProps {
   isAvailable: boolean
 }
 
+// Default gradient presets for cards without thumbnails
+const DEFAULT_GRADIENTS = [
+  { start: '#8B7ECC', end: '#A99DD8' }, // Purple
+  { start: '#7B9FE8', end: '#9B8DCF' }, // Blue-Purple
+  { start: '#FF6B9D', end: '#FFA7C4' }, // Pink
+  { start: '#4A90E2', end: '#50C9E8' }, // Blue-Cyan
+  { start: '#FF8C42', end: '#FFB347' }, // Orange
+  { start: '#6BCB77', end: '#98D8AA' }, // Green
+  { start: '#E879C0', end: '#B47EC9' }, // Magenta
+  { start: '#FF6B58', end: '#FF8E7A' }, // Coral
+]
+
+// Get a consistent gradient based on task ID
+function getDefaultGradient(taskId: string) {
+  const hash = taskId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return DEFAULT_GRADIENTS[hash % DEFAULT_GRADIENTS.length]
+}
+
 export function TaskCard({ task, cooldownEnd, onSelect, isAvailable }: TaskCardProps) {
   // Calculate user reward (75% of CPA)
   const userReward = task.cost_per_action * 0.75
 
   // Determine if task is on cooldown
   const isOnCooldown = cooldownEnd !== null && cooldownEnd > new Date()
+
+  // Get gradient - use task's gradient or default based on ID
+  const defaultGradient = getDefaultGradient(task.id)
+  const gradientStart = task.gradient_start || defaultGradient.start
+  const gradientEnd = task.gradient_end || defaultGradient.end
 
   const handleClick = () => {
     if (isAvailable && !isOnCooldown) {
@@ -46,7 +69,7 @@ export function TaskCard({ task, cooldownEnd, onSelect, isAvailable }: TaskCardP
       <div
         className="absolute inset-0"
         style={{
-          background: `linear-gradient(135deg, ${task.gradient_start || '#8B7ECC'} 0%, ${task.gradient_end || '#A99DD8'} 100%)`,
+          background: `linear-gradient(135deg, ${gradientStart} 0%, ${gradientEnd} 100%)`,
         }}
       />
 
@@ -103,6 +126,20 @@ export function TaskCard({ task, cooldownEnd, onSelect, isAvailable }: TaskCardP
         >
           {task.description || 'Complete this task to earn rewards!'}
         </p>
+
+        {/* Play Button */}
+        {isAvailable && !isOnCooldown && (
+          <motion.div 
+            className="mt-3 flex items-center justify-center"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 border border-white/30">
+              <Play className="w-4 h-4 text-white fill-white" />
+              <span className="text-white text-sm font-semibold">Play</span>
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {/* Cooldown overlay */}

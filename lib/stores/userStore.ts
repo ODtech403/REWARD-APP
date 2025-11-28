@@ -109,12 +109,20 @@ export const useUserStore = create<UserState>()(
     {
       name: 'user-storage',
       partialize: (state) => ({
+        user: state.user,
+        walletBalance: state.walletBalance,
         cooldowns: serializeCooldowns(state.cooldowns),
       }),
       merge: (persisted, current) => {
-        const persistedState = persisted as { cooldowns?: CooldownEntry[] }
+        const persistedState = persisted as { 
+          user?: User | null
+          walletBalance?: number
+          cooldowns?: CooldownEntry[] 
+        }
         return {
           ...current,
+          user: persistedState?.user ?? null,
+          walletBalance: persistedState?.walletBalance ?? 0,
           cooldowns: persistedState?.cooldowns 
             ? deserializeCooldowns(persistedState.cooldowns)
             : new Map(),

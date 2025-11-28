@@ -23,15 +23,18 @@ type TaskCompletionRow = Database['public']['Tables']['task_completions']['Row']
 
 export default function UserDashboard() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const { isActive: isConfettiActive, triggerConfetti, onComplete: onConfettiComplete } = useConfetti()
 
   const { user, walletBalance, setUser, setBalance, setCooldown } = useUserStore()
   const { tasks, categories, setTasks, setCategories } = useTaskStore()
   const { theme } = useThemeStore()
   const isDark = theme === 'dark'
+
+  // Show cached data immediately, only show loading if no cached data
+  const hasCachedData = user !== null && tasks.length > 0
+  const [isLoading, setIsLoading] = useState(!hasCachedData)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
   useCooldownManager()
 
@@ -60,29 +63,46 @@ export default function UserDashboard() {
 
     async function loadDashboardData() {
       try {
-        setIsLoading(true)
+        // Only show loading spinner if no cached data
+        if (!hasCachedData) {
+          setIsLoading(true)
+        }
         setError(null)
 
-        const { data: { user }, error: authError } = await supabase.auth.getUser()
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
         
-        if (authError || !user) {
+        if (authError || !authUser) {
           router.push('/login')
           return
         }
 
         // Fetch all data in parallel for faster loading
+        const profilePromise = supabase.from('profiles').select('*').eq('id', authUser.id).single()
+        const categoriesPromise = supabase.from('categories').select('*').order('sort_order', { ascending: true })
+        const campaignsPromise = supabase.from('campaigns').select(`*, category:categories(*)`).eq('status', 'active').order('total_budget', { ascending: false })
+        const completionsPromise = supabase.from('task_completions').select('campaign_id, cooldown_ends_at').eq('user_id', authUser.id).gt('cooldown_ends_at', new Date().toISOString())
+
         const [profileResult, categoriesResult, campaignsResult, completionsResult] = await Promise.all([
-          supabase.from('profiles').select('*').eq('id', user.id).single<Profile>(),
-          supabase.from('categories').select('*').order('sort_order', { ascending: true }),
-          supabase.from('campaigns').select(`*, category:categories(*)`).eq('status', 'active').order('total_budget', { ascending: false }),
-          supabase.from('task_completions').select('campaign_id, cooldown_ends_at').eq('user_id', user.id).gt('cooldown_ends_at', new Date().toISOString())
+          profilePromise,
+          categoriesPromise,
+          campaignsPromise,
+          completionsPromise
         ])
 
-        if (profileResult.error || !profileResult.data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const profileData = profileResult as any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const categoriesData = categoriesResult as any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const campaignsData = campaignsResult as any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const completionsData = completionsResult as any
+
+        if (profileData.error || !profileData.data) {
           throw new Error('Failed to load profile')
         }
 
-        const profile = profileResult.data
+        const profile = profileData.data as Profile
 
         setUser({
           id: profile.id,
@@ -94,15 +114,15 @@ export default function UserDashboard() {
           createdAt: new Date(profile.created_at),
         })
         setBalance(Number(profile.wallet_balance))
-        setCategories(categoriesResult.data || [])
+        setCategories(categoriesData.data || [])
 
-        const completions = (completionsResult.data || []) as Pick<TaskCompletionRow, 'campaign_id' | 'cooldown_ends_at'>[]
+        const completions = (completionsData.data || []) as Pick<TaskCompletionRow, 'campaign_id' | 'cooldown_ends_at'>[]
 
         completions.forEach((completion) => {
           setCooldown(completion.campaign_id, new Date(completion.cooldown_ends_at))
         })
 
-        const campaigns = (campaignsResult.data || []) as (CampaignRow & { category?: Category })[]
+        const campaigns = (campaignsData.data || []) as (CampaignRow & { category?: Category })[]
         const tasksWithCooldowns: Task[] = campaigns.map((campaign) => {
           const completion = completions.find((c) => c.campaign_id === campaign.id)
           const cooldownEndsAt = completion ? new Date(completion.cooldown_ends_at) : null
@@ -120,14 +140,16 @@ export default function UserDashboard() {
         setTasks(tasksWithCooldowns)
       } catch (err) {
         console.error('Dashboard load error:', err)
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard')
+        if (!hasCachedData) {
+          setError(err instanceof Error ? err.message : 'Failed to load dashboard')
+        }
       } finally {
         setIsLoading(false)
       }
     }
 
     loadDashboardData()
-  }, [router, setUser, setBalance, setCooldown, setTasks, setCategories])
+  }, [router, setUser, setBalance, setCooldown, setTasks, setCategories, hasCachedData])
 
   const handleTaskSelect = (taskId: string) => {
     router.push(`/task/${taskId}`)
@@ -145,7 +167,8 @@ export default function UserDashboard() {
 
   const bgClass = isDark ? 'bg-[#0a0a0a]' : 'bg-gray-100'
 
-  if (isLoading) {
+  // Only show loading skeleton if no cached data at all
+  if (isLoading && !hasCachedData) {
     return (
       <div className={`min-h-screen ${bgClass}`}>
         <div className="p-4 space-y-4">
@@ -160,7 +183,7 @@ export default function UserDashboard() {
     )
   }
 
-  if (error) {
+  if (error && !hasCachedData) {
     return (
       <div className={`min-h-screen ${bgClass} flex items-center justify-center p-4`}>
         <div className="text-center">
@@ -177,7 +200,7 @@ export default function UserDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pb-20">
+    <div className={`min-h-screen ${bgClass} pb-20`}>
       <ConfettiCelebration isActive={isConfettiActive} onComplete={onConfettiComplete} />
 
       {/* Header Section */}

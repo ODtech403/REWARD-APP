@@ -17,6 +17,10 @@ export type Database = {
           avatar_url: string | null
           role: 'user' | 'advertiser' | 'admin'
           wallet_balance: number
+          referral_code: string | null
+          referred_by: string | null
+          referral_count: number
+          referral_earnings: number
           created_at: string
           updated_at: string
         }
@@ -27,6 +31,10 @@ export type Database = {
           avatar_url?: string | null
           role?: 'user' | 'advertiser' | 'admin'
           wallet_balance?: number
+          referral_code?: string | null
+          referred_by?: string | null
+          referral_count?: number
+          referral_earnings?: number
           created_at?: string
           updated_at?: string
         }
@@ -37,8 +45,41 @@ export type Database = {
           avatar_url?: string | null
           role?: 'user' | 'advertiser' | 'admin'
           wallet_balance?: number
+          referral_code?: string | null
+          referred_by?: string | null
+          referral_count?: number
+          referral_earnings?: number
           created_at?: string
           updated_at?: string
+        }
+      }
+      referrals: {
+        Row: {
+          id: string
+          referrer_id: string
+          referred_id: string
+          reward_amount: number
+          status: 'pending' | 'completed' | 'rejected'
+          completed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          referrer_id: string
+          referred_id: string
+          reward_amount?: number
+          status?: 'pending' | 'completed' | 'rejected'
+          completed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          referrer_id?: string
+          referred_id?: string
+          reward_amount?: number
+          status?: 'pending' | 'completed' | 'rejected'
+          completed_at?: string | null
+          created_at?: string
         }
       }
       categories: {
@@ -75,6 +116,7 @@ export type Database = {
           title: string
           description: string | null
           thumbnail_url: string | null
+          promotion_url: string | null
           campaign_type: 'survey' | 'video' | 'task' | 'app_download' | 'website_visit'
           total_budget: number
           spent_amount: number
@@ -99,6 +141,7 @@ export type Database = {
           title: string
           description?: string | null
           thumbnail_url?: string | null
+          promotion_url?: string | null
           campaign_type: 'survey' | 'video' | 'task' | 'app_download' | 'website_visit'
           total_budget: number
           spent_amount?: number
@@ -123,6 +166,7 @@ export type Database = {
           title?: string
           description?: string | null
           thumbnail_url?: string | null
+          promotion_url?: string | null
           campaign_type?: 'survey' | 'video' | 'task' | 'app_download' | 'website_visit'
           total_budget?: number
           spent_amount?: number

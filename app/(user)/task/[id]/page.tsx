@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/Card'
 import { CooldownTimer } from '@/components/user/CooldownTimer'
 import { RewardAnimation, useRewardAnimation } from '@/components/user/RewardAnimation'
 import { ConfettiCelebration, useConfetti } from '@/components/user/ConfettiCelebration'
+import { PlayCelebration, usePlayCelebration } from '@/components/user/PlayCelebration'
 import { useUserStore } from '@/lib/stores/userStore'
 import { useTaskStore } from '@/lib/stores/taskStore'
 import type { Task } from '@/lib/types'
@@ -37,6 +38,7 @@ export default function TaskDetailPage() {
   const { updateTask } = useTaskStore()
   const { animationState, triggerAnimation } = useRewardAnimation()
   const { isActive: isConfettiActive, triggerConfetti, onComplete: onConfettiComplete } = useConfetti()
+  const { isActive: isPlayCelebrationActive, triggerCelebration: triggerPlayCelebration, onComplete: onPlayCelebrationComplete } = usePlayCelebration()
 
   useEffect(() => {
     const supabase = createBrowserClient<Database>(
@@ -107,7 +109,17 @@ export default function TaskDetailPage() {
   }, [taskId, router, setCooldown])
 
   const handleStartTask = () => {
+    // Trigger the exciting celebration animation
+    triggerPlayCelebration()
     setTaskStartTime(new Date())
+    
+    // Open the promotion URL in a new tab after a short delay
+    const promotionUrl = task?.promotion_url
+    if (promotionUrl) {
+      setTimeout(() => {
+        window.open(promotionUrl, '_blank', 'noopener,noreferrer')
+      }, 1500) // Delay to let user see the celebration
+    }
   }
 
 
@@ -204,6 +216,7 @@ export default function TaskDetailPage() {
     <div className="min-h-screen bg-[#0a0a0a] pb-20">
       <RewardAnimation {...animationState} />
       <ConfettiCelebration isActive={isConfettiActive} onComplete={onConfettiComplete} />
+      <PlayCelebration isActive={isPlayCelebrationActive} onComplete={onPlayCelebrationComplete} />
 
       {/* Header */}
       <div className="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-lg border-b border-white/10">
@@ -280,11 +293,26 @@ export default function TaskDetailPage() {
           <h2 className="text-lg font-semibold text-white mb-2">Instructions</h2>
           <ol className="list-decimal list-inside space-y-2 text-gray-300">
             <li>Read through the task requirements carefully</li>
-            <li>Click &quot;Start Task&quot; to begin the timer</li>
-            <li>Complete the required actions</li>
-            <li>Click &quot;Complete Task&quot; to claim your reward</li>
+            <li>Click &quot;Play&quot; to open the promotion link</li>
+            <li>Complete the required actions on the website/app</li>
+            <li>Return here and click &quot;Complete Task&quot; to claim your reward</li>
           </ol>
         </Card>
+
+        {/* Promotion Link Info */}
+        {task.promotion_url && (
+          <Card className="p-4 bg-blue-500/10 border-blue-500/30">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-blue-500/20">
+                <Play className="w-5 h-5 text-blue-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-medium">Promotion Link</p>
+                <p className="text-blue-400 text-sm truncate">{task.promotion_url}</p>
+              </div>
+            </div>
+          </Card>
+        )}
 
         <Card className="p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/30">
           <div className="flex items-center justify-between">
@@ -311,10 +339,10 @@ export default function TaskDetailPage() {
           <Button
             ref={startButtonRef}
             onClick={handleStartTask}
-            className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            className="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
           >
-            <Play className="w-5 h-5 mr-2" />
-            Start Task
+            <Play className="w-5 h-5 mr-2 fill-white" />
+            Play Now
           </Button>
         ) : (
           <motion.div

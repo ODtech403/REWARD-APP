@@ -26,6 +26,7 @@ interface CampaignCreateRequest {
   gradientStart?: string
   gradientEnd?: string
   expiresAt?: string
+  promotionUrl?: string // Direct link, app store URL, or website to promote
 }
 
 export async function POST(request: NextRequest) {
@@ -99,6 +100,7 @@ export async function POST(request: NextRequest) {
       gradientStart = '#8B7ECC',
       gradientEnd = '#A99DD8',
       expiresAt,
+      promotionUrl,
     } = body
 
     // Validate required fields
@@ -159,6 +161,7 @@ export async function POST(request: NextRequest) {
       title: title.trim(),
       description: description?.trim() || null,
       thumbnail_url: thumbnailUrl || null,
+      promotion_url: promotionUrl?.trim() || null,
       campaign_type: campaignType,
       total_budget: totalBudget,
       spent_amount: 0,

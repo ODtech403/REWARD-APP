@@ -13,6 +13,8 @@ import {
   CheckCircle,
   ChevronRight,
   Loader2,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/lib/stores/userStore'
@@ -22,7 +24,7 @@ import Link from 'next/link'
 export default function ProfilePage() {
   const router = useRouter()
   const { user, walletBalance, setUser } = useUserStore()
-  const { theme } = useThemeStore()
+  const { theme, toggleTheme } = useThemeStore()
   const isDark = theme === 'dark'
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -226,11 +228,43 @@ export default function ProfilePage() {
           </div>
         </motion.div>
 
-        {/* Quick Links */}
+        {/* Theme Toggle */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          className={`rounded-2xl overflow-hidden border ${cardClass}`}
+        >
+          <div className={`px-5 py-4 border-b ${borderClass}`}>
+            <h3 className={`font-semibold ${textClass}`}>Appearance</h3>
+          </div>
+
+          <button
+            onClick={toggleTheme}
+            className={`w-full flex items-center gap-4 p-4 ${hoverClass} transition-colors`}
+          >
+            <div className={`w-10 h-10 rounded-xl ${isDark ? 'bg-purple-500/10' : 'bg-purple-50'} flex items-center justify-center`}>
+              {isDark ? (
+                <Moon className={`w-5 h-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`} />
+              ) : (
+                <Sun className={`w-5 h-5 ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`} />
+              )}
+            </div>
+            <div className="flex-1 text-left">
+              <p className={`font-medium ${textClass}`}>{isDark ? 'Dark Mode' : 'Light Mode'}</p>
+              <p className={`text-sm ${textSecondaryClass}`}>Tap to switch theme</p>
+            </div>
+            <div className={`w-12 h-7 rounded-full p-1 transition-colors ${isDark ? 'bg-purple-500' : 'bg-gray-300'}`}>
+              <div className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${isDark ? 'translate-x-5' : 'translate-x-0'}`} />
+            </div>
+          </button>
+        </motion.div>
+
+        {/* Quick Links */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
           className={`rounded-2xl overflow-hidden border ${cardClass}`}
         >
           <div className={`px-5 py-4 border-b ${borderClass}`}>

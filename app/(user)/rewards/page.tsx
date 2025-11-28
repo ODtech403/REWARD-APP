@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useUserStore } from '@/lib/stores/userStore'
+import { useThemeStore } from '@/lib/stores/themeStore'
 
 interface Achievement {
   id: string
@@ -40,6 +41,8 @@ interface RewardTier {
 export default function RewardsPage() {
   const router = useRouter()
   const { walletBalance } = useUserStore()
+  const { theme } = useThemeStore()
+  const isDark = theme === 'dark'
 
   const achievements: Achievement[] = [
     {
@@ -139,8 +142,14 @@ export default function RewardsPage() {
 
   const currentTier = getCurrentTier()
 
+  const bgClass = isDark ? 'bg-[#0a0a0a]' : 'bg-gray-100'
+  const cardClass = isDark ? 'bg-[#1a1a1a] border-white/10' : 'bg-white border-gray-200'
+  const textClass = isDark ? 'text-white' : 'text-gray-800'
+  const textSecondaryClass = isDark ? 'text-gray-400' : 'text-gray-600'
+  const borderClass = isDark ? 'border-white/10' : 'border-gray-200'
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pb-24">
+    <div className={`min-h-screen ${bgClass} pb-24`}>
       {/* Header */}
       <div className="bg-gradient-to-r from-green-500 to-emerald-400 px-4 py-6">
         <motion.div
@@ -185,11 +194,11 @@ export default function RewardsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-[#1a1a1a] rounded-2xl overflow-hidden border border-white/10"
+          className={`rounded-2xl overflow-hidden border ${cardClass}`}
         >
-          <div className="px-5 py-4 border-b border-white/10 flex items-center gap-2">
-            <Gift className="w-5 h-5 text-green-400" />
-            <h2 className="font-semibold text-white">Achievements</h2>
+          <div className={`px-5 py-4 border-b ${borderClass} flex items-center gap-2`}>
+            <Gift className={`w-5 h-5 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
+            <h2 className={`font-semibold ${textClass}`}>Achievements</h2>
           </div>
           
           <div className="p-4 space-y-4">
@@ -199,7 +208,7 @@ export default function RewardsPage() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 * (index + 1) }}
-                className={`p-4 rounded-xl border ${achievement.unlocked ? 'border-green-500/30 bg-green-500/10' : 'border-white/10 bg-white/5'}`}
+                className={`p-4 rounded-xl border ${achievement.unlocked ? (isDark ? 'border-green-500/30 bg-green-500/10' : 'border-green-300 bg-green-50') : (isDark ? 'border-white/10 bg-white/5' : 'border-gray-200 bg-gray-50')}`}
               >
                 <div className="flex items-start gap-4">
                   <div className={`w-12 h-12 rounded-xl ${achievement.bgColor} flex items-center justify-center flex-shrink-0`}>
@@ -207,31 +216,31 @@ export default function RewardsPage() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-white">{achievement.title}</h3>
+                      <h3 className={`font-semibold ${textClass}`}>{achievement.title}</h3>
                       {achievement.unlocked && (
                         <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">
                           Unlocked
                         </span>
                       )}
                     </div>
-                    <p className="text-gray-400 text-sm mb-2">{achievement.description}</p>
+                    <p className={`text-sm mb-2 ${textSecondaryClass}`}>{achievement.description}</p>
                     
                     {/* Progress Bar */}
                     <div className="mb-2">
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-gray-500">Progress</span>
-                        <span className="text-gray-300">{achievement.current}/{achievement.target}</span>
+                        <span className={textSecondaryClass}>Progress</span>
+                        <span className={textClass}>{achievement.current}/{achievement.target}</span>
                       </div>
-                      <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                      <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-gray-200'}`}>
                         <div 
-                          className={`h-full rounded-full ${achievement.unlocked ? 'bg-green-500' : 'bg-gray-500'}`}
+                          className={`h-full rounded-full ${achievement.unlocked ? 'bg-green-500' : 'bg-gray-400'}`}
                           style={{ width: `${Math.min(100, (achievement.current / achievement.target) * 100)}%` }}
                         />
                       </div>
                     </div>
                     
-                    <p className="text-xs text-gray-500">
-                      Reward: <span className="font-medium text-green-400">{achievement.reward}</span>
+                    <p className={`text-xs ${textSecondaryClass}`}>
+                      Reward: <span className={`font-medium ${isDark ? 'text-green-400' : 'text-green-600'}`}>{achievement.reward}</span>
                     </p>
                   </div>
                 </div>
@@ -245,11 +254,11 @@ export default function RewardsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-[#1a1a1a] rounded-2xl overflow-hidden border border-white/10"
+          className={`rounded-2xl overflow-hidden border ${cardClass}`}
         >
-          <div className="px-5 py-4 border-b border-white/10 flex items-center gap-2">
-            <Crown className="w-5 h-5 text-green-400" />
-            <h2 className="font-semibold text-white">Reward Tiers</h2>
+          <div className={`px-5 py-4 border-b ${borderClass} flex items-center gap-2`}>
+            <Crown className={`w-5 h-5 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
+            <h2 className={`font-semibold ${textClass}`}>Reward Tiers</h2>
           </div>
           
           <div className="p-4 space-y-4">
