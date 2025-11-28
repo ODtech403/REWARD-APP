@@ -24,6 +24,7 @@ import { clsx } from 'clsx'
 import { createClient } from '@/lib/supabase/client'
 import { useUserStore } from '@/lib/stores/userStore'
 import { useThemeStore } from '@/lib/stores/themeStore'
+import { LanguageDetector } from '@/components/shared/LanguageDetector'
 import type { Profile } from '@/lib/types'
 
 const navItems = [
@@ -119,6 +120,9 @@ export default function UserLayout({
 
   return (
     <div className={clsx('min-h-screen', isDark ? 'bg-[#0a0a0a]' : 'bg-gray-100')}>
+      {/* Language Detection */}
+      <LanguageDetector />
+      
       {/* Top Header Bar - Green Notification Banner */}
       <header className="sticky top-0 z-40 bg-gradient-to-r from-green-500 to-emerald-400 shadow-sm">
         <div className="flex items-center px-4 py-3 gap-3">
